@@ -1,3 +1,6 @@
+[submodule "DHT11-DHT22-Python-library-Orange-PI"]
+	path = DHT11-DHT22-Python-library-Orange-PI
+	url = https://github.com/jingl3s/DHT11-DHT22-Python-library-Orange-PI.git
 [submodule "dht"]
 	path = dht
 	url = https://github.com/jingl3s/DHT11-DHT22-Python-library-Orange-PI.git
