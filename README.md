@@ -56,6 +56,11 @@ sudo systemctl enable opi_oled_dht.service
 - ETC configuration 
   - https://github.com/laneboysrc/rc-headless-transmitter/blob/master/configurator/orangepizero/INSTALL.md
   
+# Licence
+
+This code is free software; you can redistribute it and/or modify it
+under the terms of the BSD license (see the file
+COPYING.txt included with the distribution).
   
 ## Meta
 
