@@ -15,6 +15,8 @@ import psutil
 from random import randint
 import socket
 import time
+import subprocess
+from collections import OrderedDict
 
 
 try:
@@ -274,10 +276,11 @@ def create_dht():
         from dht.dht_interface import DHTInterface
         dht11 = DHTInterface(0, 11)
         dht22 = DHTInterface(1, 22)
+        print("DHT reel")
     except:
         dht11 = DHTFake(11)
         dht22 = DHTFake(22)
-
+        print("DHT fake")
 
 def menu(lmenu, device=None, sous_menu=False, gpio_pins=None):
     '''
@@ -314,7 +317,7 @@ def menu(lmenu, device=None, sous_menu=False, gpio_pins=None):
         # Activate selection of menu
         elif val_lu == False:
             
-            print('Menu selectionne : {}'.format(smenu[sel][1:]))
+#             print('Menu selectionne : {}'.format(smenu[sel][1:]))
             
             # Ajout d'une demamde de confirmation pour valider la selection'
             if not sous_menu:
@@ -345,10 +348,11 @@ def action_push_button(pin_info, pins_complete):
     global device
 #     if pin_info["count"] == 3:
     if True:
-        print("Extinction demandé {}".format(pin_info["count"]))
+#         print("Extinction demandé {}".format(pin_info["count"]))
 
-        dmenu = dict()
-        dmenu['Eteindre'] = 'sudo halt'
+        dmenu = OrderedDict()
+        dmenu['Eteindre'] = ['sudo', 'halt']
+#         dmenu['Eteindre'] = ['sudo', 'halt', '--help']
         dmenu['Test'] = 'print(\'test\')'
         dmenu['Quitter menu'] = '0'
         
@@ -358,12 +362,16 @@ def action_push_button(pin_info, pins_complete):
         pin_info["change"] = False
 
         index = menu(lmenu, device, gpio_pins=pins_complete)
-        if index in lmenu:
-            eval_ret = eval(dmenu[lmenu[index]])  # @UnusedVariable
+        if index <= len(lmenu):
+            #Execution commande
+            print("Command to execute: {}".format(dmenu[lmenu[index]]))
+#             eval_ret = eval(dmenu[lmenu[index]])  # @UnusedVariable
+            subprocess.call(dmenu[lmenu[index]])
 
         pin_info["count"] = 0
     else:
-        print("Passage")
+        pass
+#         print("Passage")
 
 
 def action_utilisateur(gpio_pin):
@@ -441,7 +449,7 @@ def io_verif_status(p_dict_pin, desative_fonction=False):
         pin_info["last_state"] = current
         
         if not current and last_state != current:
-            print("Changement detecte")
+#             print("Changement detecte")
             pin_info["change"] = True
             pin_info["count"] += 1
             if not desative_fonction:
@@ -463,7 +471,8 @@ def main():
     global dht22
     global device
 
-    WAIT_TIME = 1
+    WAIT_TIME = 60
+#     WAIT_TIME = 1
     looper = 0
 
 # breakpoint
