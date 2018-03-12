@@ -440,7 +440,7 @@ def io_verif_status(p_dict_pin, desative_fonction=False):
 
         pin_info["last_state"] = current
         
-        if current and last_state != current:
+        if not current and last_state != current:
             print("Changement detecte")
             pin_info["change"] = True
             pin_info["count"] += 1
