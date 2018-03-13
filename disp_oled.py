@@ -362,12 +362,13 @@ def action_push_button(pin_info, pins_complete):
         pin_info["change"] = False
 
         index = menu(lmenu, device, gpio_pins=pins_complete)
-        if index <= len(lmenu):
+        if index == lmenu.index('Eteindre'):
             #Execution commande
             print("Command to execute: {}".format(dmenu[lmenu[index]]))
 #             eval_ret = eval(dmenu[lmenu[index]])  # @UnusedVariable
             subprocess.call(dmenu[lmenu[index]])
 
+        pin_info["change"] = False
         pin_info["count"] = 0
     else:
         pass
@@ -441,7 +442,7 @@ def io_verif_status(p_dict_pin, desative_fonction=False):
     :param desative_fonction:
     '''
     # Activation du reset pour avoir l'affichage fonctionnel
-
+    action_released = False
     for pin_info in p_dict_pin.values():
         last_state = pin_info["last_state"]
         current = GPIO.input(pin_info["pin"])
@@ -455,8 +456,11 @@ def io_verif_status(p_dict_pin, desative_fonction=False):
             if not desative_fonction:
                 if pin_info["fonction"] is not None:
                     pin_info["fonction"](pin_info, p_dict_pin)
+                    action_released = True
         else:
             pin_info["change"] = False
+    
+    return action_released
 
 
 
@@ -471,7 +475,7 @@ def main():
     global dht22
     global device
 
-    WAIT_TIME = 60
+    WAIT_TIME = 30
 #     WAIT_TIME = 1
     looper = 0
 
@@ -524,16 +528,28 @@ def main():
 
     font10 = make_font("ProggyTiny.ttf", 16)
 
-    while True:
-        io_verif_status(dict_pin)
-        list_text = stats_page()
-        disp_text(device, list_text)
-        if looper == 0:
-            time.sleep(WAIT_TIME * 2)
-            looper = 1
-        else:
-            time.sleep(WAIT_TIME)
+    next_time = time.time()
 
+    while True:
+        action_performed = io_verif_status(dict_pin)
+        
+        if next_time < time.time() or action_performed: 
+            # Hide screen to save power
+            if not dict_pin[16]["last_state"]:
+                device.hide()
+            else:
+                # Display screen and update content
+                device.show()
+                
+                list_text = stats_page()
+                disp_text(device, list_text)
+                if looper == 0:
+                    next_time = time.time() + WAIT_TIME * 2
+                    looper = 1
+                else:
+                    next_time = time.time() + WAIT_TIME * 2
+                
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     try:
