@@ -547,7 +547,7 @@ def main():
                     next_time = time.time() + WAIT_TIME * 2
                     looper = 1
                 else:
-                    next_time = time.time() + WAIT_TIME * 2
+                    next_time = time.time() + WAIT_TIME
                 
         time.sleep(0.1)
 
