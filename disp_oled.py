@@ -376,6 +376,8 @@ def action_push_button(pin_info, pins_complete):
 
         index = menu(lmenu, device, gpio_pins=pins_complete)
         if index == lmenu.index('Eteindre'):
+            # Shutdown screen before
+            device.cleanup()
             #Execution commande
             print("Command to execute: {}".format(dmenu[lmenu[index]]))
             subprocess.call(dmenu[lmenu[index]])
