@@ -45,6 +45,8 @@ col1 = 3
 global number_line_per_page
 number_line_per_page = 4
 
+#Screen rotation
+g_rotate_val = 0
 
 def do_nothing(obj):
     pass
@@ -93,9 +95,8 @@ def cpu_usage():
 
 def cpu_temperature():
     tempC = ((int(open('/sys/class/thermal/thermal_zone0/temp').read()) / 1000))
-    return "CPU TEMP: %sc" \
-        % (str(tempC))
-
+#     return "CPU TEMP: %sc" % (str(tempC))
+    return "CPU TEMP: {0:0.1f} C".format(tempC)
 
 def mem_usage():
     usage = psutil.virtual_memory()
@@ -187,17 +188,19 @@ def disp_text(device, p_list_text):
     :param p_list_text: List of text with a string per line to display
     '''
     with canvas(device) as draw:
-        draw.rectangle((0, 0, 127, height - 1), outline="white", fill="black")
+#         draw.rectangle((0, 0, 127, height - 1), outline="white", fill="black")
 
         for line, text in enumerate(p_list_text):
             draw.text((col1, line_pixel[line]), text,
                       font=font10, fill=255)
 
 
-def get_oled_device():
+
+def get_oled_device(rotate_val):
     '''
     Intialize my dedicated reset of device to start properly on I2C
     
+    :param rotate_val: The rotate vale expected by the device 0,1,2,3
     :return device: Luma device
     '''
     from luma.core.interface.serial import i2c  # @UnresolvedImport
@@ -218,33 +221,45 @@ def get_oled_device():
 
     # rev.1 users set port=0
     serial = i2c(port=0, address=0x3D)
-#     device = ssd1306(serial, rotate=1)
-    device = ssd1306(serial)
+
+    # rotate=2 180°
+    device = ssd1306(serial, rotate=rotate_val)
 
     # Activer la ligne suivante permet de bloquer l'affichage sur le dernier text lors de l'arret du programme
     #     device.cleanup = do_nothing
     return device
 
 
-def get_my_device():
+def get_my_device(rotate=False):
     '''
     Try getting physical device otherwize return the emulated one
+    :param rotate:True to enable rotation screen since last call of this function False stay as default
     :return device as luma
     '''
+    global g_rotate_val
+    if rotate:
+        if g_rotate_val == 0:
+            g_rotate_val = 2
+        else:
+            g_rotate_val = 0
+    else:
+        g_rotate_val = 0
+    
     try:
-        dev = get_oled_device()
+        dev = get_oled_device(g_rotate_val)
     except:
-        dev = get_emul_device()
+        dev = get_emul_device(g_rotate_val)
     return dev
 
 
-def get_emul_device():
+def get_emul_device(rotate_val):
     '''
     Create a luma emulator device
+    :param rotate_val: The rotate vale expected by the device 0,1,2,3
     :return device as luma
     '''
     from luma.emulator.device import pygame  # @UnresolvedImport
-    device = pygame(mode="1")
+    device = pygame(mode="1", rotate=rotate_val)
     # Activer la ligne suivante permet de bloquer l'affichage sur le dernier text lors de l'arret du programme
 #     device.cleanup = do_nothing
     return device
@@ -341,19 +356,17 @@ def action_push_button(pin_info, pins_complete):
     '''
     Function called when the GPIO change the current state in order to process something
     
-    It will display a menu to user as the gpio button are use to go accros the menu and validate with only two buttons
+    It will display a menu to user as the gpio button are use to go across the menu and validate with only two buttons
     :param pin_info: The current dictionary information of key pressed
     :param pins_complete: All the dictionary of gpio configured
     '''
     global device
-#     if pin_info["count"] == 3:
-    if True:
-#         print("Extinction demandé {}".format(pin_info["count"]))
+    if pin_info["count"] == 2:
 
         dmenu = OrderedDict()
         dmenu['Eteindre'] = ['sudo', 'halt']
-#         dmenu['Eteindre'] = ['sudo', 'halt', '--help']
         dmenu['Test'] = 'print(\'test\')'
+        dmenu['Tourner'] = ''
         dmenu['Quitter menu'] = '0'
         
         lmenu = list(dmenu.keys())
@@ -365,14 +378,15 @@ def action_push_button(pin_info, pins_complete):
         if index == lmenu.index('Eteindre'):
             #Execution commande
             print("Command to execute: {}".format(dmenu[lmenu[index]]))
-#             eval_ret = eval(dmenu[lmenu[index]])  # @UnusedVariable
             subprocess.call(dmenu[lmenu[index]])
-
+        if index == lmenu.index('Tourner'):
+            device = get_my_device(rotate=True)
+        if index == lmenu.index('Test'):
+            # For information other idea to evaluate python command
+            eval_ret = eval(dmenu[lmenu[index]])  # @UnusedVariable
+            
         pin_info["change"] = False
         pin_info["count"] = 0
-    else:
-        pass
-#         print("Passage")
 
 
 def action_utilisateur(gpio_pin):
@@ -450,7 +464,6 @@ def io_verif_status(p_dict_pin, desative_fonction=False):
         pin_info["last_state"] = current
         
         if not current and last_state != current:
-#             print("Changement detecte")
             pin_info["change"] = True
             pin_info["count"] += 1
             if not desative_fonction:
@@ -533,22 +546,25 @@ def main():
     while True:
         action_performed = io_verif_status(dict_pin)
         
+        # Hide screen to save power
+        if not dict_pin[16]["last_state"]:
+            device.hide()
+        else:
+            # Display screen and update content
+            device.show()
+        
+        # Mise a jour du contenu de l'affichage seulement si le bouton le permet
         if next_time < time.time() or action_performed: 
-            # Hide screen to save power
-            if not dict_pin[16]["last_state"]:
-                device.hide()
-            else:
-                # Display screen and update content
-                device.show()
-                
+            if dict_pin[16]["last_state"]:
                 list_text = stats_page()
                 disp_text(device, list_text)
+                # Premier affichage dure plus longtemps
                 if looper == 0:
                     next_time = time.time() + WAIT_TIME * 2
                     looper = 1
                 else:
                     next_time = time.time() + WAIT_TIME
-                
+        # Attendre la boucle      
         time.sleep(0.1)
 
 if __name__ == "__main__":
