@@ -1,11 +1,19 @@
-# OrangePiZero_OLED_Dht_display
+.emula# OrangePiZero_OLED_Dht_display
 Display information on OLED display connected to Orange Pi Zero
 
 
 # Installation
-```shell
-git clone https://github.com/jingl3s/OrangePiZero_OLED_Dht_display.git
+Recurse submodule is used to get the git dependencies as per dht directory
 
+```shell
+git clone https://github.com/jingl3s/OrangePiZero_OLED_Dht_display.git --recurse-submodules
+
+```
+
+Or if you have already cloned:
+
+```shell
+git submodule update --init --recursive
 ```
 
 * Setup the informations needed
@@ -25,7 +33,7 @@ sudo nano /lib/systemd/system/opi_oled_dht.service
 
 ```ini
 [Unit]
-Description=Sound Interactions
+Description=Orange Pi Display server
 After=multi-user.target
 [Service]
 Type=idle

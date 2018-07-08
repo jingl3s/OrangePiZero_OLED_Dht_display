@@ -7,16 +7,15 @@ under the terms of the BSD license (see the file
 COPYING.txt included with the distribution).
 '''
 from PIL import ImageFont
+from collections import OrderedDict
 from datetime import datetime
 from math import log
 import os
 import platform
 import psutil
 from random import randint
-import socket
-import time
 import subprocess
-from collections import OrderedDict
+import time
 
 
 try:
@@ -32,7 +31,6 @@ except ImportError:
         import GPIOEmu as GPIO
 
 from luma.core.render import canvas  # @NoMove @UnresolvedImport
-# from demo_opts import get_device
 
 global width
 width = 128
@@ -260,6 +258,9 @@ def get_emul_device(rotate_val):
     '''
     from luma.emulator.device import pygame  # @UnresolvedImport
     device = pygame(mode="1", rotate=rotate_val)
+#     from luma.emulator.device import capture
+#     device = capture(mode="1", rotate=rotate_val)
+    
     # Activer la ligne suivante permet de bloquer l'affichage sur le dernier text lors de l'arret du programme
 #     device.cleanup = do_nothing
     return device
@@ -491,7 +492,7 @@ def main():
     global device
 
     WAIT_TIME = 30
-#     WAIT_TIME = 1
+    WAIT_TIME = 1
     looper = 0
 
 # breakpoint
@@ -541,7 +542,10 @@ def main():
     for cpt in range(number_line_per_page):
         line_pixel.append(cpt * hauteur_ligne + 2)
 
-    font10 = make_font("ProggyTiny.ttf", 16)
+#     font10 = make_font("ProggyTiny.ttf", 16)
+    font10 = make_font("enhanced_dot_digital-7.ttf", 10)
+    
+    
 
     next_time = time.time()
 
