@@ -7,16 +7,21 @@ under the terms of the BSD license (see the file
 COPYING.txt included with the distribution).
 '''
 from PIL import ImageFont
-from collections import OrderedDict
 from datetime import datetime
 from math import log
 import os
 import platform
 import psutil
 from random import randint
-import subprocess
+import socket
 import time
+import subprocess
+from collections import OrderedDict
 
+try:
+    import orange_pi_wifi
+except:
+    pass
 
 try:
     from pyA20.gpio import gpio as GPIO  # @UnresolvedImport
@@ -31,6 +36,7 @@ except ImportError:
         import GPIOEmu as GPIO
 
 from luma.core.render import canvas  # @NoMove @UnresolvedImport
+# from demo_opts import get_device
 
 global width
 width = 128
@@ -83,6 +89,14 @@ def bytes2human(n):
             return '%s%s' % (value, s)
     return "%sB" % n
 
+
+def get_opi_wifi():
+    global count_wifi
+    global opi_next_time
+    if opi_next_time < time.time(): 
+        opi_next_time = time.time() + 15*60
+        count_wifi += True == orange_pi_wifi.orange_pi_network()
+    return "Wifi actif coubt {}".format(count_wifi)
 
 def cpu_usage():
     # load average, uptime
@@ -534,7 +548,12 @@ def main():
     page_lines.append((cpu_temperature, None))
     page_lines.append((get_dht, dht11))
     page_lines.append((get_dht, dht22))
-    page_lines.append((get_push_button, dict_pin))
+#    page_lines.append((get_push_button, dict_pin))
+    global count_wifi
+    global opi_next_time
+    count_wifi = 0
+    opi_next_time=0
+    page_lines.append((get_opi_wifi, None))
 
     line_pixel = list()
     hauteur_ligne = int(height / number_line_per_page) - 1
