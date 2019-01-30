@@ -17,6 +17,9 @@ Si oui verification si internet est disponible
 Si non alors redemarrage networking ou test pour redemarrer seulement la carte wifi
 
     '''
+    global _logger
+    logging.basicConfig(level=logging.DEBUG)
+    _logger = logging.getLogger()
     reseau_dispo = False
     # Reseau local dispo
     if _is_network_avail():
@@ -77,6 +80,7 @@ def verify_wifi_status()->bool:
 
 
 def verify_url(url: str) -> bool:
+    global _logger
     last_comm_success = False
     if True:
         if True:
@@ -107,7 +111,5 @@ def _execute_cmd(cmd):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    _logger = logging.getLogger()
     exec_net = orange_pi_network()
     _logger.info("Exec network: {}".format(exec_net))
